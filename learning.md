@@ -120,4 +120,44 @@ elk：提供k8s集群日志统一分析接入
 
 假定了所有Pod都在一个可以之间连通的扁平的网络空间（都可以直接通过IP直接到达）
 
+* pod内部通讯：localhost
+* pod1到pod2
+  * 在同一台机器，由docker直接转发
+  * 不在同一台机器。将Pod的IP和Node的IP关联其阿里访问
+* pod和service：iptables维护和转发
+* pod到外网：pod向外网发送请求，查找路由表……
+* 外网访问pod：Service
+
+## 资源清单
+
+### 资源
+
+名称空间级、集群级（Namespace、Node、Role、ClusterRole、RoleBinding、ClusterRoleBinding）、元数据型（HPA、PodTemplate、LimitRange）
+
+* 资源负载型资源：Pod、RS、Deployment、StatefulSet、DaemonSet、Job、CronJob
+* 服务发现及负载均衡型资源：Service、Ingres
+* 配置和存储型资源：Volume、CSI（容器存储接口，可以扩展各种第三方存储卷）
+* 特殊类型存储卷：ConfigMap（配置中心资源类型）、Secret、DownwardAPI
+
+### yaml
+
+缩进只能用空格
+
+支持对象（键值对）、数组、纯量（scalars）
+
+```yaml
+# dic
+name: name
+age: 1
+# arr
+verbs:
+  - watch
+  - list
+```
+
+单引号得用两个单引号转义
+
+### 常用字段
+
+
 # question
