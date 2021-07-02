@@ -157,7 +157,13 @@ verbs:
 
 单引号得用两个单引号转义
 
-### 常用字段
+[yaml1](https://www.cnblogs.com/wswang/p/10736766.html)
+
+[yaml2](https://blog.csdn.net/weixin_43357497/article/details/107645691)
+
+[Cluster Role](yaml/role.yaml), [Service Account](yaml/serviceaccount.yaml) and [Cluster Role Binding](yaml/rolebinding.yaml)
+
+### pod生命周期
 
 
 # question

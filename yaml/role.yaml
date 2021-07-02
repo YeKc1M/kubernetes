@@ -1,0 +1,18 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: RaRole
+  labels:
+    chart: "scp"
+    release: "scp-release"
+rules:
+  - apiGroups:
+      - "security.istio.io"
+    resources:
+      - requestauthentications
+    verbs:
+      - watch
+      - list
+      - get
+      - update
+      - delete
