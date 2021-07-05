@@ -6,6 +6,8 @@
 
 ### hello minikube
 
+[hello world](https://kubernetes.io/docs/tutorials/stateless-application/expose-external-ip-address/)
+
 ### basics
 
 #### cluster
@@ -90,6 +92,26 @@ Service match a set of Pods using [labels and selectors](https://kubernetes.io/d
 `kubectl rollout undo deployments/kubernetes-bootcamp` to roll back
 
 ### configuration
+
+```yaml
+# ...
+env:
+  - name: name1
+    valueFrom:
+      configMapKeyRef:/secretKeyRef:
+        name: ConfigMapName/SecretName
+        key: ConfigMapKey/SecretKey
+```
+
+#### configmap & secret
+
+[official doc configmap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
+
+[configmap](https://www.cnblogs.com/janeysj/p/11615463.html)
+
+[secret](https://blog.csdn.net/skh2015java/article/details/109228364)
+
+### stateful application
 
 
 # bilibili
