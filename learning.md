@@ -1,12 +1,14 @@
-# Tutorial
+# official doc
 
 [kubernetes official document](https://kubernetes.io/docs/tutorials/)
 
-## hello minikube
+## tutorial
 
-## basics
+### hello minikube
 
-### cluster
+### basics
+
+#### cluster
 
 a kubernetes cluster consists of two type of  resources:
 
@@ -17,7 +19,7 @@ a kubernetes cluster consists of two type of  resources:
 
 `kubectl get nodes` to see the nodes in the cluster
 
-### deployment & pod
+#### deployment & pod
 
 A *deployment* is responsible for creating and updating instances of your application
 
@@ -41,7 +43,7 @@ when we create a Deployment in K8S, the Deployment creates Pods with containers 
 
 in case of a Node failure, indentical Pods are schedules on other available Nodes in the cluster
 
-### node
+#### node
 
 Kubernetes master automatically handle scheduling the pods and pods across the Nodes in the cluster
 
@@ -50,7 +52,45 @@ every Kubernetes Node runs at least:
 * Kubelet, a process responsible for communication between Kubernetes Master and the Node, it manage the Pods and the containers running on a machine
 * A container runtime responsible for pulling the container image from registry, unpacking the container and running the application
 
-### service
+#### service
+
+> an abstraction which defines a logical set of Pods and a policy by which to access them
+
+ReplicaSet: drive the cluster back to desired state via creation of new Pods
+
+the set of Pods targeted by a Service is usually determined by a LabelSelector
+
+* ClusterIP(default)
+  * expose the Service on an internal IP in the cluster
+  * only reachable from within the cluster
+* NodePort
+  * expose the Service on the same port of each selected Node in the cluster using NAT
+  * accessible from outside the cluster using `<NodeIP>:<NodePort>`
+  * superset of ClusterIP
+* LoadBalancer
+  * create an external load balancer in the current cloud and assign a fixed, external IP to the Service
+  * superset of NodePort
+* ExternalName
+  * map the Service to the contents of the `externalName` field, by returning a `CNAME` record with its value.
+
+> `kubectl get nodes -o wide` to see NodeIP
+
+Service match a set of Pods using [labels and selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
+
+#### scaling & update
+
+[HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+
+`kubectl scale deployments/kubernetes-bootcamp --replicas=4` to scale deployment
+
+`kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2` to update image
+
+`kubectl rollout status deployments/kubernetes-bootcamp` to confirm the update
+
+`kubectl rollout undo deployments/kubernetes-bootcamp` to roll back
+
+### configuration
+
 
 # bilibili
 
@@ -164,6 +204,5 @@ verbs:
 [Cluster Role](yaml/role.yaml), [Service Account](yaml/serviceaccount.yaml) and [Cluster Role Binding](yaml/rolebinding.yaml)
 
 ### pod生命周期
-
 
 # question
