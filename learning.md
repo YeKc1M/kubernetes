@@ -113,6 +113,19 @@ env:
 
 ### stateful application
 
+## concepts
+
+### overview
+
+set `spec` when create the object, providing a description of the characteristics you want the resource to have: its desired state
+
+`status` describe the current state of the object
+
+`apiVersion`,`kind`,`metadata`,`spec` is required in yaml
+
+[official doc for spec field](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#-strong-workloads-apis-strong-)
+
+`annotation` can be retrieved in metadata
 
 # bilibili
 
