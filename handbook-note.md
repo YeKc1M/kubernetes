@@ -160,3 +160,101 @@ PV是集群中的资源，生命周期与pod相互独立
 role、rolebinding
 
 ## 核心组件
+
+[reference](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/components/README.md)
+
+![核心组件](https://github.com/feiskyer/kubernetes-handbook/blob/master/.gitbook/assets/components%20%2811%29.png)
+
+* etcd键值对数据库，保存整个集群的状态
+* API Server提供资源操作的唯一入口，提供认证、授权、访问控制、API注册和发现等机制
+* controller manager负责维护集群状态，如故障检测、自动扩展、滚动更新
+* scheduler负责资源调度，按预定调度策略将pod调度到对应机器
+* kublet维护容器声明周期，负责Volume和网络的管理
+* container runtime负责镜像管理以及pod和容器的运行
+* kube-proxy负责为service和cluster内部的服务发现和负载均衡
+
+### 组件通讯
+
+* 只有api server能直接操作etcd
+
+略
+
+## 资源对象
+
+### autoscaling
+
+HPA根据CPU使用或自定义metrics自动扩展pod数量（rc、deployment和rs）
+
+* 控制管理器每30s查询metrics的资源使用情况（`--horizontal-pod-autoscaler-sync-period`）
+* 三种metrics
+  * 预定义的metrics以利用率方式计算
+  * 自定义的pod metrics以原始值方式计算
+  * 自定义的object metrics
+* 两种metrics查询方式：heapster和自定义REST API
+* 支持多metrics
+
+[heapster](https://www.kubernetes.org.cn/932.html)
+
+### cluster autoscaler
+
+当集群容量不足时，去cloud provider常见新的node
+
+在node长时间（超过10min）资源利用率很低（50%）自动将其删除，删除时会有1min的graceful termination time
+
+删除后，原来的pod会自动调度到其他node上（通过Deployment、SS等控制器）
+
+每10s定期检测是否由重组资源来调度新创建的pod，不足将创建新node
+
+### configmap
+
+实现应用和配置分离，避免因为修改配置而重新构建镜像
+
+可以保存单个属性或配置文件
+
+[创建configmap](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/configmap.md#configmap-%E5%88%9B%E5%BB%BA)
+
+[yaml使用configmap](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/configmap.md#configmap-%E4%BD%BF%E7%94%A8)
+
+大量的ConfigMap和Secret会使大量的watch事件急剧增加kube-apiserver的负载，并会导致错误配置过快传播到整个集群
+
+yaml中设置`immutable: true`
+
+* 保护应用，使之免受意外更新带来的负面影响
+* kubenetes会关闭不可变ConfigMap的监视操作
+
+### CRD
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/customresourcedefinition.md#crd-%E7%A4%BA%E4%BE%8B)
+
+finalizer用于实现控制器的异步预删除。finalizer只当后，客户端删除对象只会设置`metadata.deletionTimestamp`而不是直接操作
+
+会触发正在监听CRD的控制器，控制器执行一些删除前的清理操作，从列表中删除自己的finalizer，然后再重新发起一个删除操作
+
+yaml`validatoin`可以提前验证用户提交的资源是否符合规范
+
+[validation](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/customresourcedefinition.md#validation)
+
+[subresources](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/customresourcedefinition.md#subresources)支持/status和/scale两个子资源
+
+[categories](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/customresourcedefinition.md#categories)给CRD分组
+
+### DaemonSet
+
+
+### CronJob
+
+定时任务，在指定时间周期运行指定的任务
+
+[spec](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/cronjob.md#cronjob-spec)
+
+# todo
+
+[sample controller](https://github.com/kubernetes/sample-controller)管理CRD
+
+组件通讯
+
+heapster
+
+[HPA最佳实践](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/autoscaling.md)
+
+[cluster autoscaler部署](https://github.com/feiskyer/kubernetes-handbook/blob/master/setup/addon-list/cluster-autoscaler.md#%E9%83%A8%E7%BD%B2)
