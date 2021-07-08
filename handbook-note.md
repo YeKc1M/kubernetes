@@ -205,6 +205,28 @@ HPA根据CPU使用或自定义metrics自动扩展pod数量（rc、deployment和r
 
 每10s定期检测是否由重组资源来调度新创建的pod，不足将创建新node
 
+### node
+
+node controller负责
+
+* 维护node状态
+* 与cloud provider同步node
+* 给node分配容器cidr
+* 删除带有`NoExecute`taint的node上的pods
+
+默认情况下，kubelet在启动时会向master注册自己，并创建node资源
+
+node包括以下状态信息
+
+* 地址：hostname、外网ip和内网ip
+* 条件condition：OutOfDisk、Ready、MemoryPressure和DiskPressure
+* 容量capacity：node上可用资源，包括CPU、内容和pod总数
+* 基本信息：内核版本、容器引擎版本等
+
+#### kube-scheduler
+
+todo
+
 ### namespace
 
 虚拟隔离。node，pv，namespace等资源不属于任何namespace
@@ -313,6 +335,10 @@ TTL控制器用来自动清理已经结束的pod（Complete和Failed）`.spec.tt
 定时任务，在指定时间周期运行指定的任务
 
 [spec](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/cronjob.md#cronjob-spec)
+
+### NetworkPolicy
+
+[NetworkPolicy](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/network-policy.md)
 
 ### Ingress
 
