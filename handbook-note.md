@@ -205,6 +205,23 @@ HPA根据CPU使用或自定义metrics自动扩展pod数量（rc、deployment和r
 
 每10s定期检测是否由重组资源来调度新创建的pod，不足将创建新node
 
+### deployment
+
+为pod和rs提供了一个声明式定义方法
+
+* 定义deployment创建pod和rs
+* 滚动升级和回滚应用
+* 扩容和缩容
+* 暂停和继续deployment
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/deployment.md#api-%E7%89%88%E6%9C%AC%E5%AF%B9%E7%85%A7%E8%A1%A8)
+
+deployment更新只会发生在`.spec.template`中label或者镜像更改时触发
+
+[回退](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/deployment.md#%E5%9B%9E%E9%80%80-deployment)
+
+[spec](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/deployment.md#%E7%BC%96%E5%86%99-deployment-spec)
+
 ### configmap
 
 实现应用和配置分离，避免因为修改配置而重新构建镜像
@@ -240,12 +257,28 @@ yaml`validatoin`可以提前验证用户提交的资源是否符合规范
 
 ### DaemonSet
 
+在每个容器上运行一个容器副本，用来部署一些集群日志、监控或者其他系统管理应用
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/daemonset.md#api-%E7%89%88%E6%9C%AC%E5%AF%B9%E7%85%A7%E8%A1%A8)
+
+通过`.spec.updateStrategy.type`设置更新策略
+
+* OnDelete：默认，更新模板后，只有手动删除旧的pod才会创建新pod
+* RollingUpdate：自动删除旧的并创建新的
+  * `.spec.updateStrategy.rollingUpdate.maxUnavailable`默认1
+  * `spec.minReadySeconds`默认0
+
+[回滚](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/daemonset.md#%E5%9B%9E%E6%BB%9A)
 
 ### CronJob
 
 定时任务，在指定时间周期运行指定的任务
 
 [spec](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/cronjob.md#cronjob-spec)
+
+### Ingress
+
+todo
 
 # todo
 
