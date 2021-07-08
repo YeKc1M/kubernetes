@@ -205,6 +205,18 @@ HPA根据CPU使用或自定义metrics自动扩展pod数量（rc、deployment和r
 
 每10s定期检测是否由重组资源来调度新创建的pod，不足将创建新node
 
+### namespace
+
+虚拟隔离。node，pv，namespace等资源不属于任何namespace
+
+```
+kubectl get namespaces
+kubectl create namespace <name>
+kubectl delete namespace <name>
+//删除一个namespace会删除所有该namespace的资源
+//event是否属于该namespace取决于产生event的对象
+```
+
 ### deployment
 
 为pod和rs提供了一个声明式定义方法
@@ -239,6 +251,10 @@ yaml中设置`immutable: true`
 * 保护应用，使之免受意外更新带来的负面影响
 * kubenetes会关闭不可变ConfigMap的监视操作
 
+### LocalVolume
+
+[local volume](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/local-volume.md)
+
 ### CRD
 
 [yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/customresourcedefinition.md#crd-%E7%A4%BA%E4%BE%8B)
@@ -270,6 +286,28 @@ yaml`validatoin`可以提前验证用户提交的资源是否符合规范
 
 [回滚](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/daemonset.md#%E5%9B%9E%E6%BB%9A)
 
+### Job
+
+批量处理短暂的一次性任务
+
+* 非并行job：创建一个pod直到其成功结束
+* 固定结束次数的job：设置`.spec.completions`，创建多个pod，直到`.spec.completions`个pod成功结束
+* 带有工作队列的并行job：设置`.spec.Parallelism`，当所有pod结束并至少一个成功，job被认为成功
+
+job controller负责根据job spec创建pod，持续监控pod状态，直到结束。如果失败，根据`restartPolicy`决定是否创建新的pod再次重试任务（只支持`OnFailure`和`Never`）
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/job.md#job-spec-%E6%A0%BC%E5%BC%8F)
+
+* `spec.template`同pod
+* `RestartPolicy`只支持`Never`和`OnFailure`
+* `spec.activeDeadlineSeconds`标志失败pod的重试最大时间，超过这个时间不会继续重试
+
+[Indexed Job](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/job.md#indexed-job)
+
+TTL控制器用来自动清理已经结束的pod（Complete和Failed）`.spec.ttlSecondsAfterFinished`
+
+`.sepc.suspend`暂停和重启job
+
 ### CronJob
 
 定时任务，在指定时间周期运行指定的任务
@@ -278,7 +316,17 @@ yaml`validatoin`可以提前验证用户提交的资源是否符合规范
 
 ### Ingress
 
-todo
+通常，service和pod的IP仅可在集群内部访问。集群外部请求需要通过负载均衡转发到service和Node上暴露的NodePort，然后再由kube-proxy通过edge router将其转发给相关的pod或者丢弃
+
+ingress是为进入集群的请求提供路由规则的集合
+
+#### ingress controller
+
+为配置Ingress规则，需要部署一个[ingress controller](https://github.com/feiskyer/kubernetes-handbook/tree/master/extension/ingress)
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/ingress.md#ingress-%E6%A0%BC%E5%BC%8F)
+
+更新ingress`kubectl edit ing <ing_name>`
 
 # todo
 
@@ -291,3 +339,5 @@ heapster
 [HPA最佳实践](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/autoscaling.md)
 
 [cluster autoscaler部署](https://github.com/feiskyer/kubernetes-handbook/blob/master/setup/addon-list/cluster-autoscaler.md#%E9%83%A8%E7%BD%B2)
+
+ingress controller
