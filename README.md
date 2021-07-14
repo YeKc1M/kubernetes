@@ -4,4 +4,4 @@ learning.md is a note for k8s learning
 
 # httpdemo
 
-This is a SpringBoot project
+This is a SpringBoot project for test ip&port in windows kubernetes services
