@@ -91,7 +91,7 @@ kube-proxy是一个分布式代理服务器，在k8s每个节点上都有一个
 
 批处理业务有始有终，长期伺服型业务在用户不停止的情况下永远运行
 
-成功完成的标志根据`spec.completions`策略
+成功完成的标志根据 `spec.completions`策略
 
 #### DaemonSet
 
@@ -212,7 +212,7 @@ node controller负责
 * 维护node状态
 * 与cloud provider同步node
 * 给node分配容器cidr
-* 删除带有`NoExecute`taint的node上的pods
+* 删除带有 `NoExecute`taint的node上的pods
 
 默认情况下，kubelet在启动时会向master注册自己，并创建node资源
 
@@ -225,7 +225,9 @@ node包括以下状态信息
 
 #### kube-scheduler
 
-todo
+监听kube-apiserver，查询为分配node的pod，根据调度策略为node分配节点
+
+[kube-scheduler](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/components/scheduler.md)
 
 ### namespace
 
@@ -250,11 +252,44 @@ kubectl delete namespace <name>
 
 [yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/deployment.md#api-%E7%89%88%E6%9C%AC%E5%AF%B9%E7%85%A7%E8%A1%A8)
 
-deployment更新只会发生在`.spec.template`中label或者镜像更改时触发
+deployment更新只会发生在 `.spec.template`中label或者镜像更改时触发
 
 [回退](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/deployment.md#%E5%9B%9E%E9%80%80-deployment)
 
 [spec](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/deployment.md#%E7%BC%96%E5%86%99-deployment-spec)
+
+### pod
+
+特征
+
+* 包含多个共享IPC（Inter-Process Communication）和network namespace的容器，可直接通过localhost通信
+* 所有Pod可访问共享的Volume，访问共享数据
+* 无容错性：pod一旦被调度后就跟node绑定，即使node挂掉也不会被重新调度（而是被自动删除），因此推荐用deploy/daemonset等控制器容错
+* 优雅终止：pod删除的时候先给其内的进程发送SIGTERM，等待一段时间（grace period）后才强制停止
+* 特权容器（通过SecurityContext配置）具有改变系统配置的权限
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/pod.md#pod-%E5%AE%9A%E4%B9%89)
+
+生命周期
+
+* pending：API Server已经创建了该pod，但一个或多个容器还没被创建
+* running：pod所有容器都已经被创建且已经调度到Node上，但至少一个容器还在运行或者正在启动
+* succeeded：pod调度到node上后均成功运行结束，且不会重启
+* failed：所有容器都被终止，但至少有一个退出失败（退出码不为0或被系统终止）
+* unknown：通常是apiserver无法与kubelet通信导致
+
+#### PodPreset
+
+给指定标签的pod注入额外信息，使pod模版不需要为每个pod显式设置重复信息
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/podpreset.md#podpreset-%E7%A4%BA%E4%BE%8B)
+
+### ReplicaSet
+
+取代RC（确保容器应用副本📖始终符合预期，确保pod数量/弹性伸缩/滚动升级以及应用多版本发布跟踪），支持集合式selector
+
+建议使用deployment管理RS
+
 
 ### configmap
 
@@ -268,24 +303,49 @@ deployment更新只会发生在`.spec.template`中label或者镜像更改时触�
 
 大量的ConfigMap和Secret会使大量的watch事件急剧增加kube-apiserver的负载，并会导致错误配置过快传播到整个集群
 
-yaml中设置`immutable: true`
+yaml中设置 `immutable: true`
 
 * 保护应用，使之免受意外更新带来的负面影响
 * kubenetes会关闭不可变ConfigMap的监视操作
+
+### PersistentVolume
+
+提供网络存储资源
+
+Volume生命周期
+
+* provisioning。PV创建，可直接创建（静态方式），也可以使用StorageClass动态创建
+  * available状态
+* Binding，将PV分配给PVC
+  * bound状态
+* Using，pod通过PVC使用该Volume，可以组织删除正在使用的PVC
+* releasing，pod释放volume并删除PVC
+  * released状态
+* reclaiming，回收PV，保留PV以便下次使用，或直接从云存储删除
+* deleting，删除pv
+  * failed状态
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/persistent-volume.md#pv)
 
 ### LocalVolume
 
 [local volume](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/local-volume.md)
 
+代表本地存储设备，如磁盘/分区或目录
+
+主要场景包括分布式存储和数据库等
+
+不支持动态创建
+
 ### CRD
 
 [yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/customresourcedefinition.md#crd-%E7%A4%BA%E4%BE%8B)
 
-finalizer用于实现控制器的异步预删除。finalizer只当后，客户端删除对象只会设置`metadata.deletionTimestamp`而不是直接操作
+finalizer用于实现控制器的异步预删除。finalizer只当后，客户端删除对象只会设置 `metadata.deletionTimestamp`而不是直接操作
 
 会触发正在监听CRD的控制器，控制器执行一些删除前的清理操作，从列表中删除自己的finalizer，然后再重新发起一个删除操作
 
-yaml`validatoin`可以提前验证用户提交的资源是否符合规范
+yaml `validatoin`可以提前验证用户提交的资源是否符合规范
 
 [validation](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/customresourcedefinition.md#validation)
 
@@ -299,7 +359,7 @@ yaml`validatoin`可以提前验证用户提交的资源是否符合规范
 
 [yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/daemonset.md#api-%E7%89%88%E6%9C%AC%E5%AF%B9%E7%85%A7%E8%A1%A8)
 
-通过`.spec.updateStrategy.type`设置更新策略
+通过 `.spec.updateStrategy.type`设置更新策略
 
 * OnDelete：默认，更新模板后，只有手动删除旧的pod才会创建新pod
 * RollingUpdate：自动删除旧的并创建新的
@@ -313,15 +373,15 @@ yaml`validatoin`可以提前验证用户提交的资源是否符合规范
 批量处理短暂的一次性任务
 
 * 非并行job：创建一个pod直到其成功结束
-* 固定结束次数的job：设置`.spec.completions`，创建多个pod，直到`.spec.completions`个pod成功结束
-* 带有工作队列的并行job：设置`.spec.Parallelism`，当所有pod结束并至少一个成功，job被认为成功
+* 固定结束次数的job：设置 `.spec.completions`，创建多个pod，直到 `.spec.completions`个pod成功结束
+* 带有工作队列的并行job：设置 `.spec.Parallelism`，当所有pod结束并至少一个成功，job被认为成功
 
-job controller负责根据job spec创建pod，持续监控pod状态，直到结束。如果失败，根据`restartPolicy`决定是否创建新的pod再次重试任务（只支持`OnFailure`和`Never`）
+job controller负责根据job spec创建pod，持续监控pod状态，直到结束。如果失败，根据 `restartPolicy`决定是否创建新的pod再次重试任务（只支持 `OnFailure`和 `Never`）
 
 [yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/job.md#job-spec-%E6%A0%BC%E5%BC%8F)
 
 * `spec.template`同pod
-* `RestartPolicy`只支持`Never`和`OnFailure`
+* `RestartPolicy`只支持 `Never`和 `OnFailure`
 * `spec.activeDeadlineSeconds`标志失败pod的重试最大时间，超过这个时间不会继续重试
 
 [Indexed Job](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/job.md#indexed-job)
@@ -352,11 +412,9 @@ ingress是为进入集群的请求提供路由规则的集合
 
 [yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/ingress.md#ingress-%E6%A0%BC%E5%BC%8F)
 
-更新ingress`kubectl edit ing <ing_name>`
+更新ingress `kubectl edit ing <ing_name>`
 
 # todo
-
-[sample controller](https://github.com/kubernetes/sample-controller)管理CRD
 
 组件通讯
 
