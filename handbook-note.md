@@ -304,7 +304,43 @@ deployment更新只会发生在 `.spec.template`中label或者镜像更改时触
 
 ### StatefulSet
 
-[ss](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/statefulset.md)
+应用场景
+
+* 稳定的持久化存储。基于PVC来实现
+* 稳定网络标志。pod重新调度后podname和hostname不变，基于headless service（没有cluster IP的service）实现
+* 有序部署，有序扩展。pod是有顺序的，在部署或者扩展的时候要依据定义的顺序依次依序进行（在下一个pod运行前所有pod必须都是running和ready状态），基于init containers实现
+* 有序收缩，有序删除
+
+SS组成部分
+
+* 定义DNS domain的headless service
+* 创建PV的volumeClaimTemplate
+* 定义具体应用的SS
+
+SS每个pod的DNS格式为 `statefulSetName-{0..N-1}.serviceName.namespace.svc.cluster.local`
+
+* `serviceName`为headless service的名字
+* `.cluster.local`为cluster domain
+
+[示例](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/statefulset.md#%E7%AE%80%E5%8D%95%E7%A4%BA%E4%BE%8B)
+
+SS可通过 `spec.updateStrategy`设置自动更新策略，目前支持两种策略
+
+* OnDelete：当 `.spec.template`更新时，并不立即删除旧的pod，而是等待用户手动删除这些旧pod后自动创建新pod。默认值
+* RollingUpdate：当 `.spec.template`更新时，自动删除旧的pod并创建新pod替换。在更新时，这些pod时按逆序方式进行，依次删除/创建并等待pod变成ready状态才进行下个pod的更新
+
+设置 `.spec.updateStrategy.rollingUpdate.partition`后，之后序号大于等于partition的pod会滚动更新
+
+pod管理策略
+
+* OrderedReady：默认策略，按照pod次序依次创建每个pod并等待ready后才创建后面pod
+* [Parrallel](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/statefulset.md#parallel-%E7%A4%BA%E4%BE%8B)：并行创建或删除pod
+
+注意事项
+
+* 所有pod的volume必须使用PV或者管理用事先创建好
+* 删除SS时不会删除Volume
+* SS需要一个headless service定义DNS domain，需要在SS前创建好
 
 ### service
 
@@ -334,6 +370,7 @@ service/endpoints/pod支持tcp/udp/sctp
 * 如果pod没有指定ImagePullSecrets，则把service account的ImagePullSecrets加到pod中
 * 每个container启动后都会挂载该service account的token到 `ca.crt`到 `/var/run/secrets/kubernetes.io/serviceaccount`
 
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/serviceaccount.md#%E5%88%9B%E5%BB%BA-service-account)
 
 ### configmap
 
@@ -367,6 +404,8 @@ yaml中设置 `immutable: true`
 ### Volume
 
 Kubernetes Volume生命周期与pod绑定。pod删除时，volume才会被清理，只有PV数据不会丢失
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/volume.md#emptydir)
 
 ### PersistentVolume
 
