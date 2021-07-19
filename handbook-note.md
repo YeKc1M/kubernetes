@@ -241,6 +241,16 @@ kubectl delete namespace <name>
 //event是否属于该namespace取决于产生event的对象
 ```
 
+### Resource Quota
+
+限制用户资源用量
+
+* 资源配额应用在namespace上，每个namespace最多只有一个 `ResourceQuota`
+* 开启计算资源配额后，创建容器时必须配置计算资源请求或限制
+* 用户超额后禁止创建新的资源
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/quota.md#%E5%BC%80%E5%90%AF%E8%B5%84%E6%BA%90%E9%85%8D%E9%A2%9D%E5%8A%9F%E8%83%BD)
+
 ### deployment
 
 为pod和rs提供了一个声明式定义方法
@@ -290,6 +300,40 @@ deployment更新只会发生在 `.spec.template`中label或者镜像更改时触
 
 建议使用deployment管理RS
 
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/replicaset.md#replicaset-%E7%A4%BA%E4%BE%8B)
+
+### StatefulSet
+
+[ss](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/statefulset.md)
+
+### service
+
+kubernetes的负载均衡
+
+* service：cluster内部的负载均衡，借助cloud provider提供的LB提供外部访问
+* ingress controller：用service提供cluster内部的负载均衡，通过自定义的ingress controller提供外部访问
+* service load balance：把load balancer跑在容器中，实现bare metal的service load balancer
+* custom load balancer：自定义负载均衡，替代kube-proxy，一般在物理部署kubernetes时使用，方便接入公司已有的外部服务
+
+分类
+
+* ClusterIP：默认类型，自动分配一个仅cluster内部可以访问的虚拟IP
+* NodePort：在ClusterIP的基础上为每台机器上绑定一个端口，这样可以通过 `<NodeIP>:NodePort`访问服务。
+  * 如果kube-proxy设置了 `--nodeport-addresses=10.240.0.0/16`，那么仅该NodePort仅对设置在范围内的IP有效
+* LoadBalancer：在NodePort基础上，借助cloud provider创建一个外部的负载均衡器，将请求转发到 `<NodeIP>:NodePort`
+* ExternalName：将服务通过DNS CNAME记录方式转发到指定域名（`spec.externalName`设置）
+
+[yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/service.md#service-%E5%AE%9A%E4%B9%89)
+
+service/endpoints/pod支持tcp/udp/sctp
+
+### service account
+
+* 每个pod在创建后都会自动设置 `spec.serviceAccount`为default（除非设置了其他ServiceAccount）
+* 验证pod引用的service account已经存在，否则拒绝创建
+* 如果pod没有指定ImagePullSecrets，则把service account的ImagePullSecrets加到pod中
+* 每个container启动后都会挂载该service account的token到 `ca.crt`到 `/var/run/secrets/kubernetes.io/serviceaccount`
+
 
 ### configmap
 
@@ -307,6 +351,22 @@ yaml中设置 `immutable: true`
 
 * 保护应用，使之免受意外更新带来的负面影响
 * kubenetes会关闭不可变ConfigMap的监视操作
+
+### Secret
+
+通过Volume或环境变量使用
+
+类型
+
+* Opaque：base64编码，存储密码/密钥等，加密性很弱
+* `kubernetes.io/dockerconfigjson`：存储私有docker registry的认证信息
+* `kubernetes.io/service-account-token`：用于被serviceaccount饮用。pod如果使用了service account，对应的secret会自动挂在到 `/run/secrets/kubernetes.io/serviceaccount`目录中
+
+[使用和yaml](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/secret.md#opaque-secret-%E7%9A%84%E4%BD%BF%E7%94%A8)
+
+### Volume
+
+Kubernetes Volume生命周期与pod绑定。pod删除时，volume才会被清理，只有PV数据不会丢失
 
 ### PersistentVolume
 
@@ -395,6 +455,10 @@ TTL控制器用来自动清理已经结束的pod（Complete和Failed）`.spec.tt
 定时任务，在指定时间周期运行指定的任务
 
 [spec](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/cronjob.md#cronjob-spec)
+
+### SecurityContext
+
+[security context](https://github.com/feiskyer/kubernetes-handbook/blob/master/concepts/objects/security-context.md)
 
 ### NetworkPolicy
 
